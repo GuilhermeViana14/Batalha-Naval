@@ -1,0 +1,72 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    background-image: url('./assents/download.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    color: #ffffff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.start-button {
+    padding: 10px 20px;
+    margin: 15px;
+    font-size: 1rem;
+    background-color: #1c6ea4;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.board-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Espaço entre linhas do tabuleiro */
+}
+
+.board-row {
+    display: flex;
+    gap: 5px; /* Espaço entre células */
+}
+
+.board-cell {
+    width: 40px;
+    height: 40px;
+    background-color: #1976d2;
+    border: 1px solid #fff;
+    color: #ffffff;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+}
+
+.board-cell.hit {
+    background-color: red; /* cor quando um navio é atingido */
+}
+
+.miss {
+    background-color: red; /* Cor para erros */
+}
+
+.winner {
+    font-size: 1.5rem;
+    margin-top: 20px;
+    color: #fbff00;
+}
