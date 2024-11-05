@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
-from game import Game
+from game_model import Game
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
