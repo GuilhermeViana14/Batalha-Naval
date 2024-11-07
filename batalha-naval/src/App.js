@@ -1,116 +1,128 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
+import Board from './components/Boards';
+import Controls from './components/Controls';
 import './batalha_naval.css';
 
-const socket = io('http://127.0.0.1:5000'); // Altere a URL se necessário
-
-const App = () => {
-    const [board, setBoard] = useState(Array(5).fill().map(() => Array(5).fill(0))); // Tabuleiro do oponente
-    const [myBoard, setMyBoard] = useState(Array(5).fill().map(() => Array(5).fill(0))); // Seu tabuleiro
+const socket = io('https://batalha-naval-backend-production.up.railway.app', {
+    transports: ['websocket']  // Força o uso de WebSocket
+});
+  const App = () => {
+    const [player1Board, setPlayer1Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
+    const [player2Board, setPlayer2Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
     const [message, setMessage] = useState('');
     const [gameStarted, setGameStarted] = useState(false);
     const [playerId, setPlayerId] = useState(null);
-    const [winner, setWinner] = useState(null); // Para armazenar o vencedor
+    const [winner, setWinner] = useState(null);
+
+    const personalizeMessage = (message) => {
+        if (message.includes("vez do jogador")) {
+            return message.replace("vez do jogador", "Agora é a vez do jogador!");
+        }
+        if (message.includes("acertou")) {
+            return message.replace("acertou", "Você acertou! Parabéns!");
+        }
+        if (message.includes("errou")) {
+            return message.replace("errou", "Infelizmente, você errou.");
+        }
+        if (message.includes("Vencedor")) {
+            return `${message} 🎉 Parabéns! Você venceu!`;
+        }
+        return message;
+    };
 
     useEffect(() => {
-        // Escuta eventos do socket
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor');
+        });
+
         socket.on('move_result', (result) => {
-            console.log("Resposta do servidor:", result); // Para depuração
-            
-            // Atualiza os tabuleiros
-            if (Array.isArray(result.boards) && result.boards.length === 2) {
-                const newMyBoard = Array.isArray(result.boards[0]) ? result.boards[0] : Array(5).fill().map(() => Array(5).fill(0));
-                const newBoard = Array.isArray(result.boards[1]) ? result.boards[1] : Array(5).fill().map(() => Array(5).fill(0));
-                
-                setMyBoard(newMyBoard); // Atualiza seu tabuleiro
-                setBoard(newBoard); // Atualiza o tabuleiro do oponente
+            console.log("Dados recebidos do servidor:", result);
+
+            if (result && Array.isArray(result.boards) && result.boards.length === 2) {
+                setPlayer1Board(result.boards[0].board);
+                setPlayer2Board(result.boards[1].board);
             }
 
-            // Atualiza a mensagem
-            if (result && result.message) {
-                setMessage(result.message);
-            } else {
-                console.error("Resposta do servidor não contém a mensagem esperada:", result);
+            if (result.message) {
+                const customizedMessage = personalizeMessage(result.message);
+                setMessage(customizedMessage);
             }
 
-            // Verifica se houve um vencedor
             if (result.winner) {
-                setWinner(result.winner); // Atualiza o estado do vencedor
+                setWinner(result.winner);
             }
         });
 
         socket.on('player_added', (msg) => {
-            setMessage(msg.message);
+            const customizedMessage = personalizeMessage(msg.message);
+            setMessage(customizedMessage);
         });
 
         socket.on('game_started', (msg) => {
-            setMessage(msg.message);
-            setGameStarted(true); // Define o jogo como iniciado
+            const customizedMessage = personalizeMessage(msg.message);
+            setMessage(customizedMessage);
+            setGameStarted(true);
+        });
+
+        socket.on('player_left', () => {
+            setMessage('O outro jogador deixou o jogo.');
+            resetGame();
         });
 
         return () => {
             socket.off('move_result');
             socket.off('player_added');
             socket.off('game_started');
+            socket.off('player_left');
         };
-    }, []);
+    }, [playerId]);
 
-    // Função para iniciar o jogo
     const startGame = () => {
         if (playerId === null) {
-            const id = Math.floor(Math.random() * 2); // Gera ID aleatório entre 0 e 1
+            const id = Math.floor(Math.random() * 2);
             setPlayerId(id);
-            socket.emit('add_player', { player_id: id });  // Adiciona o jogador
+            socket.emit('add_player', { player_id: id });
         }
     };
 
-    // Função para lidar com o clique na célula do tabuleiro
     const handleClick = (x, y) => {
         if (!gameStarted) {
             alert("Comece o jogo primeiro!");
             return;
         }
-        socket.emit('make_move', { player_id: playerId, x, y }); // Envia a jogada com o ID do jogador
+        socket.emit('make_move', { player_id: playerId, x, y });
     };
+
+    const leaveGame = () => {
+        if (playerId !== null) {
+            socket.emit('leave_game', { player_id: playerId });
+            resetGame();
+        }
+    };
+
+    const resetGame = () => {
+        setPlayer1Board(Array(5).fill().map(() => Array(5).fill(0)));
+        setPlayer2Board(Array(5).fill().map(() => Array(5).fill(0)));
+        setMessage('');
+        setGameStarted(false);
+        setPlayerId(null);
+        setWinner(null);
+    };
+
+    const myBoard = playerId === 0 ? player1Board : player2Board;
+    const opponentBoard = playerId === 0 ? player2Board : player1Board;
 
     return (
         <div className="app-container">
             <h1 className="app-title">Batalha Naval</h1>
-            <button className="start-button" onClick={startGame}>Start Game</button>
+            <Controls startGame={startGame} leaveGame={leaveGame} />
             {gameStarted ? (
                 <div className="board-container">
-                    <h2 className="board-title">Seu Tabuleiro</h2>
-                    <div className="board">
-                        {myBoard.map((row, i) => (
-                            <div className="board-row" key={i}>
-                                {row.map((cell, j) => (
-                                    <button 
-                                        className={`board-cell ${cell === 2 ? 'hit' : cell === 1 ? 'miss' : ''}`} 
-                                        key={j}
-                                        disabled // Não permite clicar no seu próprio tabuleiro
-                                    >
-                                        {cell === 0 ? ' ' : cell === 1 ? 'X' : 'O'}
-                                    </button>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                    <h2 className="board-title">Tabuleiro do Oponente</h2>
-                    <div className="board">
-                        {board.map((row, i) => (
-                            <div className="board-row" key={i}>
-                                {row.map((cell, j) => (
-                                    <button 
-                                        className={`board-cell ${cell === 2 ? 'hit' : cell === 1 ? 'miss' : ''}`} 
-                                        key={j} 
-                                        onClick={() => handleClick(i, j)} // Ação para o clique
-                                    >
-                                        {cell === 0 ? ' ' : cell === 1 ? 'X' : 'O'}
-                                    </button>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
+                    <h2>Seu Tabuleiro</h2>
+                    <Board board={myBoard} isMyBoard={true} />
+                    <h2>Tabuleiro do Oponente</h2>
+                    <Board board={opponentBoard} isMyBoard={false} handleClick={handleClick} /> {/* Corrigido aqui */}
                 </div>
             ) : (
                 <p className="waiting-message">Aguardando oponente...</p>
