@@ -1,0 +1,123 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    background-image: url('../assents/download.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    color: #ffffff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.start-game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 250px; /* Largura do container */
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7); /* Fundo com opacidade */
+    border-radius: 10px;
+    border: 2px solid #1c6ea4;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra para destaque */
+    margin-bottom: 20px;
+    margin-top: 20vh;
+}
+
+.start-game-title {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+
+
+.start-button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: #129bf7d8;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.start-button:hover {
+    background-color: #145a8d; /* Cor mais escura ao passar o mouse */
+}
+
+
+.leave-button {
+    padding: 10px 20px;
+    margin-top: 2vh;
+    margin-left: 80vh;
+    font-size: 1rem;
+    background-color: #1c6ea4;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    align-self: flex-start; 
+
+}
+
+.board-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 30vh;
+    margin-top: 20px;
+}
+
+.board-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.board-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+
+
+/* Estilização para a área de mensagens, parecendo uma caixa de texto */
+.message-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f4f4f4c7; /* Fundo claro, como uma caixa de texto */
+    border: 2px solid #bbb; /* Borda semelhante a uma caixa de texto */
+    border-radius: 8px; /* Bordas arredondadas */
+    max-width: 500px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: Arial, sans-serif;
+    font-size: 1rem;
+    color: #333;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    white-space: pre-wrap; /* Mantém a formatação de quebras de linha */
+    word-wrap: break-word; /* Quebra palavras longas, se necessário */
+}
+
+/* Rótulo 'Mensagem:' */
+.message-label {
+    font-weight: bold;
+    margin-right: 10px; /* Espaçamento entre o rótulo e a mensagem */
+    color: #333;
+}
+
+/* Estilo para o conteúdo da mensagem */
+.message-content {
+    color: #333;
+    font-weight: normal;
+    line-height: 1.5;
+}
