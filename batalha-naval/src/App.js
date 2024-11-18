@@ -10,11 +10,17 @@ const socket = io('127.0.0.1:5000', {
 const App = () => {
     const [player1Board, setPlayer1Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
     const [player2Board, setPlayer2Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState(''); // Mensagem a ser exibida
     const [gameStarted, setGameStarted] = useState(false);
     const [playerId, setPlayerId] = useState(null); // Estado do ID do jogador
     const [waitingForOpponent, setWaitingForOpponent] = useState(false);
     const [winner, setWinner] = useState(null);
+    const [shipPositioning, setShipPositioning] = useState({
+        x: '',
+        y: '',
+        orientation: 'horizontal', // default
+        shipName: 'submarino' // default ship
+    });
 
     useEffect(() => {
         socket.on('connect', () => {
@@ -28,13 +34,11 @@ const App = () => {
 
             setMessage(messageText);
 
-            // Só configura o ID do jogador se ainda estiver indefinido
             if (playerId === null && playerIdFromServer !== undefined) {
                 console.log("Definindo o playerId:", playerIdFromServer);
                 setPlayerId(playerIdFromServer);
             }
 
-            // Ajusta a mensagem de espera
             if (messageText === 'Jogador 2 adicionado') {
                 setWaitingForOpponent(false); 
             }
@@ -123,6 +127,54 @@ const App = () => {
         setWaitingForOpponent(false);
     };
 
+    const handleShipPlacement = () => {
+        if (!gameStarted) {
+            alert("O jogo ainda não começou!");
+            return;
+        }
+    
+        const { x, y, orientation, shipName } = shipPositioning;
+    
+        if (x < 0 || x >= 5 || y < 0 || y >= 5) {
+            alert("Coordenadas fora do tabuleiro.");
+            return;
+        }
+    
+        // Envia os dados para o servidor
+        socket.emit('place_ship', {
+            player_id: playerId,
+            x: parseInt(x),
+            y: parseInt(y),
+            orientation,
+            shipName
+        });
+    
+        socket.on('place_ship_response', (response) => {
+            if (response.success) {
+                setMessage(response.message);  // Atualiza a mensagem de sucesso
+        
+                // Atualiza o tabuleiro do jogador com o tabuleiro mais recente
+                if (playerId === 0) {
+                    setPlayer1Board(response.updated_board);
+                } else {
+                    setPlayer2Board(response.updated_board);
+                }
+            } else {
+                setMessage(response.message);  // Atualiza a mensagem de erro
+            }
+        });
+    };
+    
+
+    // Atualiza os valores do formulário para posicionar o navio
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setShipPositioning(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
     // Define os tabuleiros com base no ID do jogador
     const myBoard = playerId === 0 ? player1Board : player2Board;
     const opponentBoard = playerId === 0 ? player2Board : player1Board;
@@ -147,23 +199,79 @@ const App = () => {
                             <Board board={opponentBoard} isMyBoard={false} handleClick={handleClick} />
                         </div>
                     </div>
+                    <div className="ship-placement-form">
+                        <h3>Posicionar Navio</h3>
+                        <form onSubmit={(e) => { e.preventDefault(); handleShipPlacement(); }}>
+                            <label>
+                                Nome do Navio:
+                                <select
+                                    name="shipName"
+                                    value={shipPositioning.shipName}
+                                    onChange={handleChange}
+                                >
+                                    <option value="submarino">Submarino (1)</option>
+                                    <option value="barco">Barco (2)</option>
+                                    <option value="navio">Navio (3)</option>
+                                    <option value="porta_aviao">Porta-avião (3)</option>
+                                </select>
+                            </label>
+                            <br />
+                            <label>
+                                Coordenada X:
+                                <input
+                                    type="number"
+                                    name="x"
+                                    value={shipPositioning.x}
+                                    onChange={handleChange}
+                                    min="0"
+                                    max="4"
+                                />
+                            </label>
+                            <br />
+                            <label>
+                                Coordenada Y:
+                                <input
+                                    type="number"
+                                    name="y"
+                                    value={shipPositioning.y}
+                                    onChange={handleChange}
+                                    min="0"
+                                    max="4"
+                                />
+                            </label>
+                            <br />
+                            <label>
+                                Orientação:
+                                <select
+                                    name="orientation"
+                                    value={shipPositioning.orientation}
+                                    onChange={handleChange}
+                                >
+                                    <option value="horizontal">Horizontal</option>
+                                    <option value="vertical">Vertical</option>
+                                </select>
+                            </label>
+                            <br />
+                            <button type="submit">Posicionar Navio</button>
+                        </form>
+                    </div>
                     <div>
                         <button className="leave-button" onClick={leaveGame} disabled={playerId === null}>Leave Game</button>
                     </div>
                     <div className="player-info">
-                        <h3>{playerId === 0 ? 'Você é o Jogador 1' : 'Você é o Jogador 2'}</h3>
+                        <h3>{playerId === 0 ? 'Jogador 1:' : 'Jogador 2:'}</h3>
                     </div>
+                    
+                    {message && (
+                        <div className="message-container">
+                            <span className="message-label">Mensagem:</span>
+                            <span className="message-content">{message}</span>
+                        </div>
+                    )}
                 </>
             ) : (
                 <p className="waiting-message">{waitingForOpponent && 'Aguardando oponente...'}</p>
             )}
-            {gameStarted && (
-                <div className="message-container">
-                    <span className="message-label">Mensagem: </span>
-                    <span className="message-content">{message}</span>
-                </div>
-            )}
-            {winner && <h2 className="winner">Vencedor: Jogador {winner}</h2>}
         </div>
     );
 };

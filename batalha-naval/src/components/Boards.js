@@ -1,8 +1,7 @@
-// Board.js
-
 import React from 'react';
 import '../css/board.css';
-const Board = ({ board, isMyBoard, handleClick }) => {
+
+const Board = ({ board, isMyBoard, handleClick, playerId }) => {
     const letters = ['A', 'B', 'C', 'D', 'E'];
 
     return (
@@ -28,7 +27,16 @@ const Board = ({ board, isMyBoard, handleClick }) => {
                             <div
                                 key={colIndex}
                                 className={`board-cell ${cellClass}`}
-                                onClick={() => !isMyBoard && handleClick(rowIndex, colIndex)}
+                                onClick={() => {
+                                    // Log the coordinates of the clicked cell
+                                    console.log(`Célula clicada: Linha ${letters[rowIndex]}, Coluna ${colIndex + 1}`);
+
+                                    // Chama a função handleClick para processar o clique.
+                                    // Verifique se não é o tabuleiro do jogador (isso impede clicar no próprio tabuleiro)
+                                    if (!isMyBoard || (isMyBoard && playerId === 1)) {
+                                        handleClick(rowIndex, colIndex);
+                                    }
+                                }}
                             ></div>
                         );
                     })}
