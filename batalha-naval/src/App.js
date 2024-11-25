@@ -199,6 +199,16 @@ const App = () => {
                             <Board board={opponentBoard} isMyBoard={false} handleClick={handleClick} />
                         </div>
                     </div>
+                    <div></div>
+                    {message && (
+                        <div className="message-container">
+                            <span className="message-label">Mensagem:</span>
+                            <span className="message-content">{message}</span>
+                        </div>
+                    )}
+                    <div>
+                        <button className="leave-button" onClick={leaveGame} disabled={playerId === null}>Leave Game</button>
+                    </div>
                     <div className="ship-placement-form">
                         <h3>Posicionar Navio</h3>
                         <form onSubmit={(e) => { e.preventDefault(); handleShipPlacement(); }}>
@@ -254,20 +264,14 @@ const App = () => {
                             <br />
                             <button type="submit">Posicionar Navio</button>
                         </form>
+                        
                     </div>
-                    <div>
-                        <button className="leave-button" onClick={leaveGame} disabled={playerId === null}>Leave Game</button>
-                    </div>
+                    
                     <div className="player-info">
                         <h3>{playerId === 0 ? 'Jogador 1:' : 'Jogador 2:'}</h3>
                     </div>
                     
-                    {message && (
-                        <div className="message-container">
-                            <span className="message-label">Mensagem:</span>
-                            <span className="message-content">{message}</span>
-                        </div>
-                    )}
+                    
                 </>
             ) : (
                 <p className="waiting-message">{waitingForOpponent && 'Aguardando oponente...'}</p>
