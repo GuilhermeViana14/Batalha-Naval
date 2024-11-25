@@ -1,0 +1,59 @@
+
+.board-container {
+    display: flex;
+    flex-direction: row; /* Alinha os tabuleiros na horizontal */
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px; /* Espaço entre os dois tabuleiros */
+    margin-top: 20px;
+}
+
+.board-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.board-row {
+    display: flex;
+}
+
+.board-cell {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #000;
+    background-color: #3c8affc9; /* Cor padrão para células vazias */
+    color: #ffffff;
+}
+
+.header {
+    font-weight: bold;
+}
+
+.header-cell {
+    background-color: #3c8affb9;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.board-cell.hit {
+    background-color: red; /* Cor para acertos */
+}
+
+.board-cell.ship {
+    background-color: rgb(44, 44, 44); /* Cor para navios */
+}
+
+.board-cell.miss {
+    background-color: gray; /* Cor para erros */
+}

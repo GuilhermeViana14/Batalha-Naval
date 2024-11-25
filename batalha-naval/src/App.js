@@ -1,52 +1,65 @@
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import Board from './components/Boards';
-import Controls from './components/Controls';
-import './batalha_naval.css';
+import './css/batalha_naval.css';
 
-const socket = io('https://batalha-naval-backend-production.up.railway.app', {
-    transports: ['websocket']  // Força o uso de WebSocket
+const socket = io('127.0.0.1:5000', {
+    transports: ['websocket']
 });
-  const App = () => {
+
+const App = () => {
     const [player1Board, setPlayer1Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
     const [player2Board, setPlayer2Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
-    const [message, setMessage] = useState('');
+    const [message, setMessage] = useState(''); // Mensagem a ser exibida
     const [gameStarted, setGameStarted] = useState(false);
-    const [playerId, setPlayerId] = useState(null);
+    const [playerId, setPlayerId] = useState(null); // Estado do ID do jogador
+    const [waitingForOpponent, setWaitingForOpponent] = useState(false);
     const [winner, setWinner] = useState(null);
-
-    const personalizeMessage = (message) => {
-        if (message.includes("vez do jogador")) {
-            return message.replace("vez do jogador", "Agora é a vez do jogador!");
-        }
-        if (message.includes("acertou")) {
-            return message.replace("acertou", "Você acertou! Parabéns!");
-        }
-        if (message.includes("errou")) {
-            return message.replace("errou", "Infelizmente, você errou.");
-        }
-        if (message.includes("Vencedor")) {
-            return `${message} 🎉 Parabéns! Você venceu!`;
-        }
-        return message;
-    };
+    const [shipPositioning, setShipPositioning] = useState({
+        x: '',
+        y: '',
+        orientation: 'horizontal', // default
+        shipName: 'submarino' // default ship
+    });
 
     useEffect(() => {
         socket.on('connect', () => {
             console.log('Conectado ao servidor');
         });
 
-        socket.on('move_result', (result) => {
-            console.log("Dados recebidos do servidor:", result);
+        // Recebe o ID do jogador e configura apenas uma vez
+        socket.on('player_added', (msg) => {
+            console.log("Mensagem do servidor:", msg);
+            const [messageText, playerIdFromServer] = msg.message;
 
+            setMessage(messageText);
+
+            if (playerId === null && playerIdFromServer !== undefined) {
+                console.log("Definindo o playerId:", playerIdFromServer);
+                setPlayerId(playerIdFromServer);
+            }
+
+            if (messageText === 'Jogador 2 adicionado') {
+                setWaitingForOpponent(false); 
+            }
+        });
+
+        // Quando o jogo começa, notifica ambos os jogadores
+        socket.on('game_started', (msg) => {
+            console.log("Jogo iniciado:", msg);
+            setMessage(msg.message);
+            setGameStarted(true);
+        });
+
+        // Atualiza os tabuleiros dos jogadores após uma jogada
+        socket.on('move_result', (result) => {
             if (result && Array.isArray(result.boards) && result.boards.length === 2) {
                 setPlayer1Board(result.boards[0].board);
                 setPlayer2Board(result.boards[1].board);
             }
 
             if (result.message) {
-                const customizedMessage = personalizeMessage(result.message);
-                setMessage(customizedMessage);
+                setMessage(result.message);
             }
 
             if (result.winner) {
@@ -54,81 +67,211 @@ const socket = io('https://batalha-naval-backend-production.up.railway.app', {
             }
         });
 
-        socket.on('player_added', (msg) => {
-            const customizedMessage = personalizeMessage(msg.message);
-            setMessage(customizedMessage);
-        });
-
-        socket.on('game_started', (msg) => {
-            const customizedMessage = personalizeMessage(msg.message);
-            setMessage(customizedMessage);
-            setGameStarted(true);
-        });
-
+        // Lida com o evento quando o outro jogador sai
         socket.on('player_left', () => {
+            console.log("O outro jogador saiu");
             setMessage('O outro jogador deixou o jogo.');
             resetGame();
         });
 
+        // Limpeza dos eventos ao desmontar
         return () => {
-            socket.off('move_result');
+            socket.off('connect');
             socket.off('player_added');
             socket.off('game_started');
+            socket.off('move_result');
             socket.off('player_left');
         };
     }, [playerId]);
 
+    // Função para começar o jogo e adicionar o jogador ao servidor
     const startGame = () => {
-        if (playerId === null) {
-            const id = Math.floor(Math.random() * 2);
-            setPlayerId(id);
-            socket.emit('add_player', { player_id: id });
+        if (playerId === null) { // Envia apenas uma vez
+            console.log("Solicitando ao servidor para adicionar o jogador");
+            socket.emit('add_player');
+            setWaitingForOpponent(true); 
+        } else if (playerId === 1) {
+            console.log("Jogador 2 entrou, agora iniciando o jogo!");
+            socket.emit('start_game'); // Quando o segundo jogador clica
         }
     };
 
+    // Função para realizar uma jogada
     const handleClick = (x, y) => {
         if (!gameStarted) {
             alert("Comece o jogo primeiro!");
             return;
         }
+        console.log("Enviando jogada:", { player_id: playerId, x, y });
         socket.emit('make_move', { player_id: playerId, x, y });
     };
 
+    // Função para sair do jogo
     const leaveGame = () => {
         if (playerId !== null) {
+            console.log("Solicitando para sair do jogo:", playerId);
             socket.emit('leave_game', { player_id: playerId });
             resetGame();
         }
     };
 
+    // Função para resetar o jogo e o estado do jogador
     const resetGame = () => {
+        console.log("Resetando o jogo e o estado do jogador");
         setPlayer1Board(Array(5).fill().map(() => Array(5).fill(0)));
         setPlayer2Board(Array(5).fill().map(() => Array(5).fill(0)));
         setMessage('');
         setGameStarted(false);
-        setPlayerId(null);
+        setPlayerId(null);  // Redefine o ID do jogador para evitar conflitos
         setWinner(null);
+        setWaitingForOpponent(false);
     };
 
+    const handleShipPlacement = () => {
+        if (!gameStarted) {
+            alert("O jogo ainda não começou!");
+            return;
+        }
+    
+        const { x, y, orientation, shipName } = shipPositioning;
+    
+        if (x < 0 || x >= 5 || y < 0 || y >= 5) {
+            alert("Coordenadas fora do tabuleiro.");
+            return;
+        }
+    
+        // Envia os dados para o servidor
+        socket.emit('place_ship', {
+            player_id: playerId,
+            x: parseInt(x),
+            y: parseInt(y),
+            orientation,
+            shipName
+        });
+    
+        socket.on('place_ship_response', (response) => {
+            if (response.success) {
+                setMessage(response.message);  // Atualiza a mensagem de sucesso
+        
+                // Atualiza o tabuleiro do jogador com o tabuleiro mais recente
+                if (playerId === 0) {
+                    setPlayer1Board(response.updated_board);
+                } else {
+                    setPlayer2Board(response.updated_board);
+                }
+            } else {
+                setMessage(response.message);  // Atualiza a mensagem de erro
+            }
+        });
+    };
+    
+
+    // Atualiza os valores do formulário para posicionar o navio
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setShipPositioning(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
+
+    // Define os tabuleiros com base no ID do jogador
     const myBoard = playerId === 0 ? player1Board : player2Board;
     const opponentBoard = playerId === 0 ? player2Board : player1Board;
-
+    
     return (
         <div className="app-container">
-            <h1 className="app-title">Batalha Naval</h1>
-            <Controls startGame={startGame} leaveGame={leaveGame} />
-            {gameStarted ? (
-                <div className="board-container">
-                    <h2>Seu Tabuleiro</h2>
-                    <Board board={myBoard} isMyBoard={true} />
-                    <h2>Tabuleiro do Oponente</h2>
-                    <Board board={opponentBoard} isMyBoard={false} handleClick={handleClick} /> {/* Corrigido aqui */}
+            {!gameStarted && (
+                <div className="start-game-container">
+                    <h2 className="start-game-title">Batalha Naval</h2>
+                    <button className="start-button" onClick={startGame}>Start Game</button>
                 </div>
-            ) : (
-                <p className="waiting-message">Aguardando oponente...</p>
             )}
-            <p className="message">{message}</p>
-            {winner && <h2 className="winner">Vencedor: Jogador {winner}</h2>}
+            {gameStarted ? (
+                <>
+                    <div className="board-container">
+                        <div className="board-wrapper">
+                            <h2 className="board-title">Seu Tabuleiro</h2>
+                            <Board board={myBoard} isMyBoard={true} />
+                        </div>
+                        <div className="board-wrapper">
+                            <h2 className="board-title">Tabuleiro do Oponente</h2>
+                            <Board board={opponentBoard} isMyBoard={false} handleClick={handleClick} />
+                        </div>
+                    </div>
+                    <div className="ship-placement-form">
+                        <h3>Posicionar Navio</h3>
+                        <form onSubmit={(e) => { e.preventDefault(); handleShipPlacement(); }}>
+                            <label>
+                                Nome do Navio:
+                                <select
+                                    name="shipName"
+                                    value={shipPositioning.shipName}
+                                    onChange={handleChange}
+                                >
+                                    <option value="submarino">Submarino (1)</option>
+                                    <option value="barco">Barco (2)</option>
+                                    <option value="navio">Navio (3)</option>
+                                    <option value="porta_aviao">Porta-avião (3)</option>
+                                </select>
+                            </label>
+                            <br />
+                            <label>
+                                Coordenada X:
+                                <input
+                                    type="number"
+                                    name="x"
+                                    value={shipPositioning.x}
+                                    onChange={handleChange}
+                                    min="0"
+                                    max="4"
+                                />
+                            </label>
+                            <br />
+                            <label>
+                                Coordenada Y:
+                                <input
+                                    type="number"
+                                    name="y"
+                                    value={shipPositioning.y}
+                                    onChange={handleChange}
+                                    min="0"
+                                    max="4"
+                                />
+                            </label>
+                            <br />
+                            <label>
+                                Orientação:
+                                <select
+                                    name="orientation"
+                                    value={shipPositioning.orientation}
+                                    onChange={handleChange}
+                                >
+                                    <option value="horizontal">Horizontal</option>
+                                    <option value="vertical">Vertical</option>
+                                </select>
+                            </label>
+                            <br />
+                            <button type="submit">Posicionar Navio</button>
+                        </form>
+                    </div>
+                    <div>
+                        <button className="leave-button" onClick={leaveGame} disabled={playerId === null}>Leave Game</button>
+                    </div>
+                    <div className="player-info">
+                        <h3>{playerId === 0 ? 'Jogador 1:' : 'Jogador 2:'}</h3>
+                    </div>
+                    
+                    {message && (
+                        <div className="message-container">
+                            <span className="message-label">Mensagem:</span>
+                            <span className="message-content">{message}</span>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <p className="waiting-message">{waitingForOpponent && 'Aguardando oponente...'}</p>
+            )}
         </div>
     );
 };

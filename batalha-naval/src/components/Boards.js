@@ -1,31 +1,49 @@
-// Board.js
-
 import React from 'react';
+import '../css/board.css';
 
-const Board = ({ board, isMyBoard, handleClick }) => (
-    <div className="board">
-        {board.map((row, i) => (
-            <div key={i} className="board-row">
-                {row.map((cell, j) => {
-                    const displayCell = isMyBoard ? cell : (cell === 1 ? 0 : cell); // Oculta os navios no tabuleiro do oponente
-                    return (
-                        <button
-                            key={j}
-                            className={`board-cell ${
-                                displayCell === 2 ? 'hit' :
-                                displayCell === 1 ? 'ship' :
-                                displayCell === 3 ? 'miss' : ''
-                            }`}
-                            onClick={() => !isMyBoard && handleClick(i, j)}
-                            disabled={isMyBoard}
-                        >
-                            {displayCell === 0 ? '' : displayCell === 1 ? 'N' : displayCell === 2 ? 'X' : 'M'}
-                        </button>
-                    );
-                })}
+const Board = ({ board, isMyBoard, handleClick, playerId }) => {
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+
+    return (
+        <div className="board">
+            {/* Header with numbers */}
+            <div className="board-row header">
+                <div className="board-cell header-cell"></div>
+                {[1, 2, 3, 4, 5].map((num) => (
+                    <div key={num} className="board-cell header-cell">{num}</div>
+                ))}
             </div>
-        ))}
-    </div>
-);
+            {/* Rows with letter and cells */}
+            {board.map((row, rowIndex) => (
+                <div key={rowIndex} className="board-row">
+                    {/* Row header with letters */}
+                    <div className="board-cell header-cell">{letters[rowIndex]}</div>
+                    {row.map((cell, colIndex) => {
+                        // Conditionally apply the 'ship' class only if it's the player's own board
+                        const cellClass = cell === 1 && isMyBoard ? 'ship' :
+                                          cell === 2 ? 'hit' :
+                                          cell === 3 ? 'miss' : '';
+                        return (
+                            <div
+                                key={colIndex}
+                                className={`board-cell ${cellClass}`}
+                                onClick={() => {
+                                    // Log the coordinates of the clicked cell
+                                    console.log(`Célula clicada: Linha ${letters[rowIndex]}, Coluna ${colIndex + 1}`);
+
+                                    // Chama a função handleClick para processar o clique.
+                                    // Verifique se não é o tabuleiro do jogador (isso impede clicar no próprio tabuleiro)
+                                    if (!isMyBoard || (isMyBoard && playerId === 1)) {
+                                        handleClick(rowIndex, colIndex);
+                                    }
+                                }}
+                            ></div>
+                        );
+                    })}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export default Board;
