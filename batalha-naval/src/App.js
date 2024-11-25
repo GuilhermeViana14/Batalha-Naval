@@ -3,13 +3,14 @@ import { io } from 'socket.io-client';
 import Board from './components/Boards';
 import './css/batalha_naval.css';
 
-const socket = io('batalha-naval-backend-production.up.railway.app', {
+const socket = io('127.0.0.1:5000', {
     transports: ['websocket']  // Força o uso de WebSocket
 });
 
 const App = () => {
     const [player1Board, setPlayer1Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
     const [player2Board, setPlayer2Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
+    const [roomId, setRoomId] = useState(null);
     const [message, setMessage] = useState(''); // Mensagem a ser exibida
     const [gameStarted, setGameStarted] = useState(false);
     const [playerId, setPlayerId] = useState(null);
@@ -27,18 +28,24 @@ const App = () => {
             console.log('Conectado ao servidor');
         });
     
-         // Recebe o ID do jogador e configura apenas uma vez
-         socket.on('player_added', (msg) => {
+        socket.on('player_added', (msg) => {
             console.log("Mensagem do servidor:", msg);
-            const [messageText, playerIdFromServer] = msg.message;
-
+            
+            const messageText = msg.message;
+            const playerIdFromServer = msg.player_id;
+            const roomIdFromServer = msg.room_id;  // Supondo que o servidor envia room_id
+        
             setMessage(messageText);
-
+        
             if (playerId === null && playerIdFromServer !== undefined) {
                 console.log("Definindo o playerId:", playerIdFromServer);
                 setPlayerId(playerIdFromServer);
             }
-
+        
+            if (roomIdFromServer) {
+                setRoomId(roomIdFromServer);  // Definir roomId após receber do servidor
+            }
+        
             if (messageText === 'Jogador 2 adicionado') {
                 setWaitingForOpponent(false); 
             }
@@ -96,24 +103,35 @@ const App = () => {
         }
     };
     
-    // Função para realizar uma jogada
     const handleClick = (x, y) => {
         if (!gameStarted) {
             alert("Comece o jogo primeiro!");
             return;
         }
-        console.log("Enviando jogada:", { player_id: playerId, x, y });
-        socket.emit('make_move', { player_id: playerId, x, y });
+        console.log("Enviando jogada:", { player_id: playerId, room_id: roomId, x, y });
+        
+        if (!roomId) {
+            alert("Sala não encontrada. Tente novamente.");
+            return;
+        }
+        
+        socket.emit('make_move', { player_id: playerId, room_id: roomId, x, y });
     };
 
-    // Função para sair do jogo
     const leaveGame = () => {
         if (playerId !== null) {
             console.log("Solicitando para sair do jogo:", playerId);
-            socket.emit('leave_game', { player_id: playerId });
+            
+            if (!roomId) {
+                alert("Sala não encontrada. Tente novamente.");
+                return;
+            }
+    
+            socket.emit('leave_game', { player_id: playerId, room_id: roomId });
             resetGame();
         }
     };
+    
 
     // Função para resetar o jogo e o estado do jogador
     const resetGame = () => {
@@ -140,9 +158,16 @@ const App = () => {
             return;
         }
     
+        // Verifique se roomId está definido antes de emitir o evento
+        if (!roomId) {
+            alert("Sala não encontrada. Tente novamente.");
+            return;
+        }
+    
         // Envia os dados para o servidor
         socket.emit('place_ship', {
             player_id: playerId,
+            room_id: roomId,  // Passa o roomId correto
             x: parseInt(x),
             y: parseInt(y),
             orientation,
@@ -152,7 +177,7 @@ const App = () => {
         socket.on('place_ship_response', (response) => {
             if (response.success) {
                 setMessage(response.message);  // Atualiza a mensagem de sucesso
-        
+    
                 // Atualiza o tabuleiro do jogador com o tabuleiro mais recente
                 if (playerId === 0) {
                     setPlayer1Board(response.updated_board);
@@ -164,6 +189,7 @@ const App = () => {
             }
         });
     };
+    
     
 
     // Atualiza os valores do formulário para posicionar o navio
