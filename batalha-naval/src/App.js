@@ -3,8 +3,8 @@ import { io } from 'socket.io-client';
 import Board from './components/Boards';
 import './css/batalha_naval.css';
 
-const socket = io('127.0.0.1:5000', {
-    transports: ['websocket']
+const socket = io('batalha-naval-backend-production.up.railway.app', {
+    transports: ['websocket']  // Força o uso de WebSocket
 });
 
 const App = () => {
@@ -12,7 +12,7 @@ const App = () => {
     const [player2Board, setPlayer2Board] = useState(Array(5).fill().map(() => Array(5).fill(0)));
     const [message, setMessage] = useState(''); // Mensagem a ser exibida
     const [gameStarted, setGameStarted] = useState(false);
-    const [playerId, setPlayerId] = useState(null); // Estado do ID do jogador
+    const [playerId, setPlayerId] = useState(null);
     const [waitingForOpponent, setWaitingForOpponent] = useState(false);
     const [winner, setWinner] = useState(null);
     const [shipPositioning, setShipPositioning] = useState({
@@ -26,9 +26,9 @@ const App = () => {
         socket.on('connect', () => {
             console.log('Conectado ao servidor');
         });
-
-        // Recebe o ID do jogador e configura apenas uma vez
-        socket.on('player_added', (msg) => {
+    
+         // Recebe o ID do jogador e configura apenas uma vez
+         socket.on('player_added', (msg) => {
             console.log("Mensagem do servidor:", msg);
             const [messageText, playerIdFromServer] = msg.message;
 
@@ -43,37 +43,37 @@ const App = () => {
                 setWaitingForOpponent(false); 
             }
         });
-
-        // Quando o jogo começa, notifica ambos os jogadores
-        socket.on('game_started', (msg) => {
+    
+         // Quando o jogo começa, notifica ambos os jogadores
+         socket.on('game_started', (msg) => {
             console.log("Jogo iniciado:", msg);
             setMessage(msg.message);
             setGameStarted(true);
         });
-
+        
         // Atualiza os tabuleiros dos jogadores após uma jogada
         socket.on('move_result', (result) => {
             if (result && Array.isArray(result.boards) && result.boards.length === 2) {
                 setPlayer1Board(result.boards[0].board);
                 setPlayer2Board(result.boards[1].board);
             }
-
+    
             if (result.message) {
                 setMessage(result.message);
             }
-
+    
             if (result.winner) {
                 setWinner(result.winner);
             }
         });
-
+    
         // Lida com o evento quando o outro jogador sai
         socket.on('player_left', () => {
             console.log("O outro jogador saiu");
             setMessage('O outro jogador deixou o jogo.');
             resetGame();
         });
-
+    
         // Limpeza dos eventos ao desmontar
         return () => {
             socket.off('connect');
@@ -83,9 +83,9 @@ const App = () => {
             socket.off('player_left');
         };
     }, [playerId]);
-
-    // Função para começar o jogo e adicionar o jogador ao servidor
-    const startGame = () => {
+    
+     // Função para começar o jogo e adicionar o jogador ao servidor
+     const startGame = () => {
         if (playerId === null) { // Envia apenas uma vez
             console.log("Solicitando ao servidor para adicionar o jogador");
             socket.emit('add_player');
@@ -95,7 +95,7 @@ const App = () => {
             socket.emit('start_game'); // Quando o segundo jogador clica
         }
     };
-
+    
     // Função para realizar uma jogada
     const handleClick = (x, y) => {
         if (!gameStarted) {
