@@ -72,10 +72,10 @@
     padding: 20px;
     border-radius: 10px;
     border: 2px solid #1c6ea4;
-    margin-top: 20px;
     color: #ffffff;
     font-family: Arial, sans-serif;
     margin-right: 75vh;
+    margin-top: -13vh;
 }
 
 .ship-placement-form h3 {
@@ -145,8 +145,7 @@
 
 .leave-button {
     padding: 10px 20px;
-    margin-left: 32vh;
-    margin-top: -13vh ;
+    margin-left: 75vh;
     font-size: 1rem;
     background-color: #1c6ea4;
     color: #fff;
@@ -154,8 +153,7 @@
     border-radius: 5px;
     cursor: pointer;
     align-self: flex-start; 
-    position: absolute;
-
+    margin-top: 20px;
 }
 
 .board-container {
@@ -183,6 +181,7 @@
 
 /* Estilização para a área de mensagens, parecendo uma caixa de texto */
 .message-container {
+    
     margin-top: 20px;
     padding: 15px;
     background-color: #f4f4f4c7; /* Fundo claro, como uma caixa de texto */
@@ -190,7 +189,6 @@
     border-radius: 8px; /* Bordas arredondadas */
     max-width: 400px;
     width: 100%;
-    margin-top: 60vh;
     margin-left: 75vh;
     font-family: Arial, sans-serif;
     font-size: 1rem;
@@ -198,7 +196,7 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
     white-space: pre-wrap; /* Mantém a formatação de quebras de linha */
     word-wrap: break-word; /* Quebra palavras longas, se necessário */
-    position: absolute;
+
 }
 
 /* Rótulo 'Mensagem:' */
