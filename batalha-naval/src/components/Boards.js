@@ -2,24 +2,23 @@ import React from 'react';
 import '../css/board.css';
 
 const Board = ({ board, isMyBoard, handleClick, playerId }) => {
-    const letters = ['A', 'B', 'C', 'D', 'E'];
-
     return (
         <div className="board">
-            {/* Header with numbers */}
+            {/* Header with X and Y indicators */}
             <div className="board-row header">
-                <div className="board-cell header-cell"></div>
+                <div className="board-cell header-cell indicators">
+                    <span className="x-indicator">X →<br></br></span>
+                    <span className="y-indicator"><br></br><br></br>Y ↓</span>
+                </div>
                 {[1, 2, 3, 4, 5].map((num) => (
                     <div key={num} className="board-cell header-cell">{num}</div>
                 ))}
             </div>
-            {/* Rows with letter and cells */}
+            {/* Rows with Y axis labels */}
             {board.map((row, rowIndex) => (
                 <div key={rowIndex} className="board-row">
-                    {/* Row header with letters */}
-                    <div className="board-cell header-cell">{letters[rowIndex]}</div>
+                    <div className="board-cell header-cell">{rowIndex + 1}</div>
                     {row.map((cell, colIndex) => {
-                        // Conditionally apply the 'ship' class only if it's the player's own board
                         const cellClass = cell === 1 && isMyBoard ? 'ship' :
                                           cell === 2 ? 'hit' :
                                           cell === 3 ? 'miss' : '';
@@ -28,11 +27,7 @@ const Board = ({ board, isMyBoard, handleClick, playerId }) => {
                                 key={colIndex}
                                 className={`board-cell ${cellClass}`}
                                 onClick={() => {
-                                    // Log the coordinates of the clicked cell
-                                    console.log(`Célula clicada: Linha ${letters[rowIndex]}, Coluna ${colIndex + 1}`);
-
-                                    // Chama a função handleClick para processar o clique.
-                                    // Verifique se não é o tabuleiro do jogador (isso impede clicar no próprio tabuleiro)
+                                    console.log(`Célula clicada: Linha ${rowIndex + 1}, Coluna ${colIndex + 1}`);
                                     if (!isMyBoard || (isMyBoard && playerId === 1)) {
                                         handleClick(rowIndex, colIndex);
                                     }

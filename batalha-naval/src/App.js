@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import Board from './components/Boards';
 import './css/batalha_naval.css';
 
-const socket = io('batalha-naval-backend-production.up.railway.app', {
+const socket = io('127.0.0.1:5000', {
     transports: ['websocket']  // Força o uso de WebSocket
 });
 
@@ -153,43 +153,42 @@ const App = () => {
     
         const { x, y, orientation, shipName } = shipPositioning;
     
-        if (x < 0 || x >= 5 || y < 0 || y >= 5) {
-            alert("Coordenadas fora do tabuleiro.");
+        const adjustedX = parseInt(x) - 1; // Ajusta a entrada para 0 a 4
+        const adjustedY = parseInt(y) - 1; // Ajusta a entrada para 0 a 4
+    
+        if (adjustedX < 0 || adjustedX >= 5 || adjustedY < 0 || adjustedY >= 5) {
+            alert("Coordenadas fora do tabuleiro. Use valores de 1 a 5.");
             return;
         }
     
-        // Verifique se roomId está definido antes de emitir o evento
         if (!roomId) {
             alert("Sala não encontrada. Tente novamente.");
             return;
         }
     
-        // Envia os dados para o servidor
         socket.emit('place_ship', {
             player_id: playerId,
-            room_id: roomId,  // Passa o roomId correto
-            x: parseInt(x),
-            y: parseInt(y),
+            room_id: roomId,
+            x: adjustedX,
+            y: adjustedY,
             orientation,
             shipName
         });
     
         socket.on('place_ship_response', (response) => {
             if (response.success) {
-                setMessage(response.message);  // Atualiza a mensagem de sucesso
+                setMessage(response.message);
     
-                // Atualiza o tabuleiro do jogador com o tabuleiro mais recente
                 if (playerId === 0) {
                     setPlayer1Board(response.updated_board);
                 } else {
                     setPlayer2Board(response.updated_board);
                 }
             } else {
-                setMessage(response.message);  // Atualiza a mensagem de erro
+                setMessage(response.message);
             }
         });
     };
-    
     
 
     // Atualiza os valores do formulário para posicionar o navio
@@ -259,8 +258,8 @@ const App = () => {
                                     name="x"
                                     value={shipPositioning.x}
                                     onChange={handleChange}
-                                    min="0"
-                                    max="4"
+                                    min="1"
+                                    max="5"
                                 />
                             </label>
                             <br />
@@ -271,8 +270,8 @@ const App = () => {
                                     name="y"
                                     value={shipPositioning.y}
                                     onChange={handleChange}
-                                    min="0"
-                                    max="4"
+                                    min="1"
+                                    max="5"
                                 />
                             </label>
                             <br />

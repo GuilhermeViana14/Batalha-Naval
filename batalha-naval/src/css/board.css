@@ -8,6 +8,13 @@
     margin-top: 20px;
 }
 
+
+.board-cell.header-cell {
+    background-color: #3c8affb9;
+    color: #ffffff;
+    font-weight: bold;
+}
+
 .board-title {
     font-size: 1.5rem;
     margin-bottom: 10px;
@@ -36,6 +43,21 @@
     color: #ffffff;
 }
 
+
+.x-indicator {
+    color: #ffffff;
+    font-weight: bold;
+
+}
+
+.y-indicator {
+    color: #ffffff;
+    font-weight: bold;
+    margin-left: -31px;
+
+}
+
+
 .header {
     font-weight: bold;
 }
@@ -56,4 +78,16 @@
 
 .board-cell.miss {
     background-color: gray; /* Cor para erros */
+}
+
+.axis-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #005bbb;
+    text-align: center;
 }
