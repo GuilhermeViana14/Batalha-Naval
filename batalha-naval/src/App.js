@@ -252,7 +252,7 @@ const App = () => {
                             </label>
                             <br />
                             <label>
-                                Coordenada X:
+                                Coordenada Y:
                                 <input
                                     type="number"
                                     name="x"
@@ -264,7 +264,7 @@ const App = () => {
                             </label>
                             <br />
                             <label>
-                                Coordenada Y:
+                                Coordenada X:
                                 <input
                                     type="number"
                                     name="y"
